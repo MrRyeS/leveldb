@@ -1,0 +1,152 @@
+├── AUTHORS
+├── CONTRIBUTING.md
+├── LICENSE
+├── Makefile
+├── NEWS
+├── README.md
+├── TODO
+├── build_detect_platform
+├── db
+│   ├── autocompact_test.cc
+│   ├── builder.cc
+│   ├── builder.h
+│   ├── c.cc
+│   ├── c_test.c
+│   ├── corruption_test.cc
+│   ├── db_bench.cc
+│   ├── db_impl.cc
+│   ├── db_impl.h
+│   ├── db_iter.cc
+│   ├── db_iter.h
+│   ├── db_test.cc
+│   ├── dbformat.cc
+│   ├── dbformat.h
+│   ├── dbformat_test.cc
+│   ├── dumpfile.cc
+│   ├── fault_injection_test.cc
+│   ├── filename.cc
+│   ├── filename.h
+│   ├── filename_test.cc
+│   ├── leveldbutil.cc
+│   ├── log_format.h
+│   ├── log_reader.cc
+│   ├── log_reader.h
+│   ├── log_test.cc
+│   ├── log_writer.cc
+│   ├── log_writer.h
+│   ├── memtable.cc
+│   ├── memtable.h
+│   ├── recovery_test.cc
+│   ├── repair.cc
+│   ├── skiplist.h
+│   ├── skiplist_test.cc
+│   ├── snapshot.h
+│   ├── table_cache.cc
+│   ├── table_cache.h
+│   ├── version_edit.cc
+│   ├── version_edit.h
+│   ├── version_edit_test.cc
+│   ├── version_set.cc
+│   ├── version_set.h
+│   ├── version_set_test.cc
+│   ├── write_batch.cc
+│   ├── write_batch_internal.h
+│   └── write_batch_test.cc
+├── doc
+│   ├── bench				// benchmark 源码，参见benchmark文档
+│   │   ├── db_bench_sqlite3.cc
+│   │   └── db_bench_tree_db.cc
+│   ├── benchmark.html			// benchmark 文档
+│   ├── doc.css
+│   ├── impl.html
+│   ├── index.html			// 文档
+│   ├── log_format.txt
+│   └── table_format.txt
+├── helpers
+│   └── memenv
+│       ├── memenv.cc
+│       ├── memenv.h
+│       └── memenv_test.cc
+├── include
+│   └── leveldb
+│       ├── c.h
+│       ├── cache.h
+│       ├── comparator.h
+│       ├── db.h
+│       ├── dumpfile.h
+│       ├── env.h
+│       ├── filter_policy.h
+│       ├── iterator.h
+│       ├── options.h			// db open/read/write配置
+│       ├── slice.h			// const byte[] 的实现
+│       ├── status.h
+│       ├── table.h
+│       ├── table_builder.h
+│       └── write_batch.h
+├── issues
+│   ├── issue178_test.cc
+│   └── issue200_test.cc
+├── port				// 提供各个平台相关的基本接口，主要包含锁、条件变量、指针的原子读写
+│   ├── README
+│   ├── atomic_pointer.h		// 指针的原子读写实现
+│   ├── port.h				// * 主要头文件，外部调用#include这个即可
+│   ├── port_example.h			// 说明而已
+│   ├── port_posix.cc			// posix平台的相关实现，包含mutex、condvar
+│   ├── port_posix.h			// posix平台的相关实现，包含mutex、condvar
+│   ├── thread_annotations.h
+│   └── win
+│       └── stdint.h
+├── table
+│   ├── block.cc
+│   ├── block.h
+│   ├── block_builder.cc
+│   ├── block_builder.h
+│   ├── filter_block.cc
+│   ├── filter_block.h
+│   ├── filter_block_test.cc
+│   ├── format.cc
+│   ├── format.h
+│   ├── iterator.cc
+│   ├── iterator_wrapper.h
+│   ├── merger.cc
+│   ├── merger.h
+│   ├── table.cc
+│   ├── table_builder.cc
+│   ├── table_test.cc
+│   ├── two_level_iterator.cc
+│   └── two_level_iterator.h
+└── util
+    ├── arena.cc
+    ├── arena.h
+    ├── arena_test.cc
+    ├── bloom.cc
+    ├── bloom_test.cc
+    ├── cache.cc
+    ├── cache_test.cc
+    ├── coding.cc			// varint 实现
+    ├── coding.h			// varint 实现
+    ├── coding_test.cc
+    ├── comparator.cc
+    ├── crc32c.cc			// crc32 算法
+    ├── crc32c.h			// crc32 算法
+    ├── crc32c_test.cc			// crc32 算法
+    ├── env.cc
+    ├── env_posix.cc
+    ├── env_test.cc
+    ├── filter_policy.cc
+    ├── hash.cc
+    ├── hash.h
+    ├── hash_test.cc
+    ├── histogram.cc
+    ├── histogram.h
+    ├── logging.cc
+    ├── logging.h
+    ├── mutexlock.h
+    ├── options.cc			// db open/read/write配置
+    ├── posix_logger.h
+    ├── random.h
+    ├── status.cc
+    ├── testharness.cc
+    ├── testharness.h
+    ├── testutil.cc
+    └── testutil.h
