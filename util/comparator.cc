@@ -26,6 +26,12 @@ class BytewiseComparatorImpl : public Comparator {
     return a.compare(b);
   }
 
+  /*
+        *start:    helloWorld
+        limit:     helloZookeeper
+        由于 *start < limit, 所以调用 FindShortSuccessor(start, limit)之后，start变成：
+        helloX (保留前缀，第一个不相同的字符+1)
+   */
   virtual void FindShortestSeparator(
       std::string* start,
       const Slice& limit) const {
