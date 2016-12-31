@@ -15,6 +15,7 @@
 
 namespace leveldb {
 
+// MurmurHash
 uint32_t Hash(const char* data, size_t n, uint32_t seed) {
   // Similar to murmur hash
   const uint32_t m = 0xc6a4a793;
