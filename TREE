@@ -1,11 +1,4 @@
-├── AUTHORS
-├── CONTRIBUTING.md
-├── LICENSE
 ├── Makefile
-├── NEWS
-├── README.md
-├── TODO
-├── build_detect_platform
 ├── db
 │   ├── autocompact_test.cc
 │   ├── builder.cc
@@ -71,7 +64,7 @@
 │   └── leveldb
 │       ├── c.h
 │       ├── cache.h
-│       ├── comparator.h
+│       ├── comparator.h		// 比较器 定义
 │       ├── db.h
 │       ├── dumpfile.h
 │       ├── env.h
@@ -83,19 +76,13 @@
 │       ├── table.h
 │       ├── table_builder.h
 │       └── write_batch.h
-├── issues
-│   ├── issue178_test.cc
-│   └── issue200_test.cc
 ├── port				// 提供各个平台相关的基本接口，主要包含锁、条件变量、指针的原子读写
-│   ├── README
 │   ├── atomic_pointer.h		// 指针的原子读写实现
 │   ├── port.h				// * 主要头文件，外部调用#include这个即可
 │   ├── port_example.h			// 说明而已
 │   ├── port_posix.cc			// posix平台的相关实现，包含mutex、condvar
 │   ├── port_posix.h			// posix平台的相关实现，包含mutex、condvar
-│   ├── thread_annotations.h
-│   └── win
-│       └── stdint.h
+│   └── thread_annotations.h		// 测试hook定义
 ├── table
 │   ├── block.cc
 │   ├── block.h
@@ -125,28 +112,28 @@
     ├── cache_test.cc
     ├── coding.cc			// varint 实现
     ├── coding.h			// varint 实现
-    ├── coding_test.cc
-    ├── comparator.cc
+    ├── coding_test.cc			// varint 实现
+    ├── comparator.cc			// 比较器 实现
     ├── crc32c.cc			// crc32 算法
     ├── crc32c.h			// crc32 算法
     ├── crc32c_test.cc			// crc32 算法
-    ├── env.cc
-    ├── env_posix.cc
-    ├── env_test.cc
+    ├── env.cc				// env interface
+    ├── env_posix.cc			// posix 平台实现的env
+    ├── env_test.cc			// env test
     ├── filter_policy.cc
-    ├── hash.cc
-    ├── hash.h
-    ├── hash_test.cc
-    ├── histogram.cc
-    ├── histogram.h
+    ├── hash.cc				// hash 算法
+    ├── hash.h				// hash 算法
+    ├── hash_test.cc			// hash 算法
+    ├── histogram.cc			// 直方图,benchmark使用
+    ├── histogram.h			// 直方图,benchmark使用
     ├── logging.cc
     ├── logging.h
-    ├── mutexlock.h
+    ├── mutexlock.h			// RAII Locker
     ├── options.cc			// db open/read/write配置
     ├── posix_logger.h
-    ├── random.h
+    ├── random.h			// 随机数算法
     ├── status.cc
-    ├── testharness.cc
-    ├── testharness.h
-    ├── testutil.cc
-    └── testutil.h
+    ├── testharness.cc			// 单元测试实现
+    ├── testharness.h			// 单元测试实现
+    ├── testutil.cc			// 单元测试实现
+    └── testutil.h			// 单元测试实现

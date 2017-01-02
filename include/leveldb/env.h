@@ -28,6 +28,8 @@ class SequentialFile;
 class Slice;
 class WritableFile;
 
+// 考虑到移植以及灵活性,leveldb 将系统相关的处理(文件/进程/时间之类)抽象成 Env,用户可以自
+// 己实现相应的接口,作为 Option 传入。默认使用自带的实现。
 class Env {
  public:
   Env() { }

@@ -89,6 +89,7 @@ class PosixRandomAccessFile: public RandomAccessFile {
   }
 };
 
+// 限制mmap的数量，64bit系统中上限1000，32bit上限为0。类似原子计数而已。
 // Helper class to limit mmap file usage so that we do not end up
 // running out virtual memory or running into kernel performance
 // problems for very large databases.
@@ -288,6 +289,7 @@ class PosixLockTable {
   }
 };
 
+// ** posix 平台的 env 实现 **
 class PosixEnv : public Env {
  public:
   PosixEnv();
@@ -297,6 +299,7 @@ class PosixEnv : public Env {
     abort();
   }
 
+  // 创建一个*顺序读取*文件
   virtual Status NewSequentialFile(const std::string& fname,
                                    SequentialFile** result) {
     FILE* f = fopen(fname.c_str(), "r");
@@ -309,6 +312,7 @@ class PosixEnv : public Env {
     }
   }
 
+  // 创建一个*随机读取*文件
   virtual Status NewRandomAccessFile(const std::string& fname,
                                      RandomAccessFile** result) {
     *result = NULL;
@@ -316,7 +320,7 @@ class PosixEnv : public Env {
     int fd = open(fname.c_str(), O_RDONLY);
     if (fd < 0) {
       s = IOError(fname, errno);
-    } else if (mmap_limit_.Acquire()) {
+    } else if (mmap_limit_.Acquire()) { // mmap 数没达到上限时，使用mmap
       uint64_t size;
       s = GetFileSize(fname, &size);
       if (s.ok()) {
@@ -337,6 +341,7 @@ class PosixEnv : public Env {
     return s;
   }
 
+  // 创建一个*可写*文件
   virtual Status NewWritableFile(const std::string& fname,
                                  WritableFile** result) {
     Status s;
@@ -350,6 +355,7 @@ class PosixEnv : public Env {
     return s;
   }
 
+  // 创建一个*可追加写*文件
   virtual Status NewAppendableFile(const std::string& fname,
                                    WritableFile** result) {
     Status s;
@@ -367,6 +373,7 @@ class PosixEnv : public Env {
     return access(fname.c_str(), F_OK) == 0;
   }
 
+  // 获得 dir 路径下的文件
   virtual Status GetChildren(const std::string& dir,
                              std::vector<std::string>* result) {
     result->clear();
@@ -426,6 +433,7 @@ class PosixEnv : public Env {
     return result;
   }
 
+  // Lock 一个文件, 先insert LockTable 再Lock
   virtual Status LockFile(const std::string& fname, FileLock** lock) {
     *lock = NULL;
     Status result;
@@ -448,6 +456,7 @@ class PosixEnv : public Env {
     return result;
   }
 
+  // unlock 一个文件，同时close文件
   virtual Status UnlockFile(FileLock* lock) {
     PosixFileLock* my_lock = reinterpret_cast<PosixFileLock*>(lock);
     Status result;
@@ -460,8 +469,10 @@ class PosixEnv : public Env {
     return result;
   }
 
+  // 将function加入bg线程队列
   virtual void Schedule(void (*function)(void*), void* arg);
 
+  // 启动一个线程
   virtual void StartThread(void (*function)(void* arg), void* arg);
 
   virtual Status GetTestDirectory(std::string* result) {
@@ -485,6 +496,7 @@ class PosixEnv : public Env {
     return thread_id;
   }
 
+  // new Logger
   virtual Status NewLogger(const std::string& fname, Logger** result) {
     FILE* f = fopen(fname.c_str(), "w");
     if (f == NULL) {
@@ -516,12 +528,12 @@ class PosixEnv : public Env {
 
   // BGThread() is the body of the background thread
   void BGThread();
-  static void* BGThreadWrapper(void* arg) {
+  static void* BGThreadWrapper(void* arg) {         // pthread_create callback
     reinterpret_cast<PosixEnv*>(arg)->BGThread();
     return NULL;
   }
 
-  pthread_mutex_t mu_;
+  pthread_mutex_t mu_;              // bg Schedule 使用
   pthread_cond_t bgsignal_;
   pthread_t bgthread_;
   bool started_bgthread_;
@@ -531,8 +543,8 @@ class PosixEnv : public Env {
   typedef std::deque<BGItem> BGQueue;
   BGQueue queue_;
 
-  PosixLockTable locks_;
-  MmapLimiter mmap_limit_;
+  PosixLockTable locks_;            // 文件Lock集合
+  MmapLimiter mmap_limit_;          // mmap 上限限制
 };
 
 PosixEnv::PosixEnv() : started_bgthread_(false) {
@@ -540,11 +552,12 @@ PosixEnv::PosixEnv() : started_bgthread_(false) {
   PthreadCall("cvar_init", pthread_cond_init(&bgsignal_, NULL));
 }
 
+// 将function加入bg线程队列
 void PosixEnv::Schedule(void (*function)(void*), void* arg) {
   PthreadCall("lock", pthread_mutex_lock(&mu_));
 
   // Start background thread if necessary
-  if (!started_bgthread_) {
+  if (!started_bgthread_) {     // 未启动时，启动bg线程
     started_bgthread_ = true;
     PthreadCall(
         "create thread",
@@ -565,6 +578,7 @@ void PosixEnv::Schedule(void (*function)(void*), void* arg) {
   PthreadCall("unlock", pthread_mutex_unlock(&mu_));
 }
 
+// Schedule 的bg线程，从BGItem queue 获取item 调用func
 void PosixEnv::BGThread() {
   while (true) {
     // Wait until there is an item that is ready to run
