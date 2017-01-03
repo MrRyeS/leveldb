@@ -28,6 +28,7 @@ Logger::~Logger() {
 FileLock::~FileLock() {
 }
 
+// Logger
 void Log(Logger* info_log, const char* format, ...) {
   if (info_log != NULL) {
     va_list ap;
@@ -37,6 +38,7 @@ void Log(Logger* info_log, const char* format, ...) {
   }
 }
 
+// 将 data 写入文件 fname 中
 static Status DoWriteStringToFile(Env* env, const Slice& data,
                                   const std::string& fname,
                                   bool should_sync) {
@@ -69,6 +71,7 @@ Status WriteStringToFileSync(Env* env, const Slice& data,
   return DoWriteStringToFile(env, data, fname, true);
 }
 
+// 一次性读取整个文件 fname
 Status ReadFileToString(Env* env, const std::string& fname, std::string* data) {
   data->clear();
   SequentialFile* file;
