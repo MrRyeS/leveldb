@@ -71,6 +71,7 @@ class Status {
   std::string ToString() const;
 
  private:
+  // status 内存分配 :
   // OK status has a NULL state_.  Otherwise, state_ is a new[] array
   // of the following form:
   //    state_[0..3] == length of message

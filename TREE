@@ -55,11 +55,11 @@
 │   ├── index.html			// 文档
 │   ├── log_format.txt
 │   └── table_format.txt
-├── helpers
-│   └── memenv
-│       ├── memenv.cc
-│       ├── memenv.h
-│       └── memenv_test.cc
+├── helpers				// 辅助测试的工具集
+│   └── memenv				// 基于内存的 env 的实现
+│       ├── memenv.cc			// 基于内存的 env 的实现
+│       ├── memenv.h			// 基于内存的 env 的实现
+│       └── memenv_test.cc		// 基于内存的 env 的实现
 ├── include
 │   └── leveldb
 │       ├── c.h
@@ -72,7 +72,7 @@
 │       ├── iterator.h
 │       ├── options.h			// db open/read/write配置
 │       ├── slice.h			// const byte[] 的实现
-│       ├── status.h
+│       ├── status.h			// status 返回值实现
 │       ├── table.h
 │       ├── table_builder.h
 │       └── write_batch.h
@@ -132,7 +132,7 @@
     ├── options.cc			// db open/read/write配置
     ├── posix_logger.h
     ├── random.h			// 随机数算法
-    ├── status.cc
+    ├── status.cc			// status 返回值实现
     ├── testharness.cc			// 单元测试实现
     ├── testharness.h			// 单元测试实现
     ├── testutil.cc			// 单元测试实现
