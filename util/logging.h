@@ -18,9 +18,11 @@ namespace leveldb {
 class Slice;
 class WritableFile;
 
+// 给str后面追加一个 num 字符串
 // Append a human-readable printout of "num" to *str
 extern void AppendNumberTo(std::string* str, uint64_t num);
 
+// 给str后面追加一个经过转义的数据 value
 // Append a human-readable printout of "value" to *str.
 // Escapes any non-printable characters found in "value".
 extern void AppendEscapedStringTo(std::string* str, const Slice& value);

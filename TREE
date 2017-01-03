@@ -110,6 +110,7 @@
     ├── bloom_test.cc
     ├── cache.cc
     ├── cache_test.cc
+    ├── filter_policy.cc
     ├── coding.cc			// varint 实现
     ├── coding.h			// varint 实现
     ├── coding_test.cc			// varint 实现
@@ -120,17 +121,16 @@
     ├── env.cc				// env interface
     ├── env_posix.cc			// posix 平台实现的env
     ├── env_test.cc			// env test
-    ├── filter_policy.cc
     ├── hash.cc				// hash 算法
     ├── hash.h				// hash 算法
     ├── hash_test.cc			// hash 算法
     ├── histogram.cc			// 直方图,benchmark使用
     ├── histogram.h			// 直方图,benchmark使用
-    ├── logging.cc
-    ├── logging.h
+    ├── logging.cc			// db Log format、转义的方法
+    ├── logging.h			// db Log format、转义的方法
+    ├── posix_logger.h			// db Log file handle
     ├── mutexlock.h			// RAII Locker
     ├── options.cc			// db open/read/write配置
-    ├── posix_logger.h
     ├── random.h			// 随机数算法
     ├── status.cc			// status 返回值实现
     ├── testharness.cc			// 单元测试实现
