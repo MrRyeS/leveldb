@@ -63,7 +63,7 @@
 ├── include
 │   └── leveldb
 │       ├── c.h
-│       ├── cache.h
+│       ├── cache.h			// Cache 定义
 │       ├── comparator.h		// 比较器 定义
 │       ├── db.h
 │       ├── dumpfile.h
@@ -108,8 +108,8 @@
     ├── arena_test.cc
     ├── bloom.cc
     ├── bloom_test.cc
-    ├── cache.cc
-    ├── cache_test.cc
+    ├── cache.cc			// LRUCache 实现
+    ├── cache_test.cc			// LRUCache 测试
     ├── filter_policy.cc
     ├── coding.cc			// varint 实现
     ├── coding.h			// varint 实现

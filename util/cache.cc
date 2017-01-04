@@ -50,7 +50,7 @@ struct LRUHandle {
   bool in_cache;      // Whether entry is in the cache.
   uint32_t refs;      // References, including cache reference, if present.
   uint32_t hash;      // Hash of key(); used for fast sharding and comparisons
-  char key_data[1];   // Beginning of key
+  char key_data[1];   // Beginning of key (!!! why is 1 not 0 ?)
 
   Slice key() const {
     // For cheaper lookups, we allow a temporary Handle object
@@ -68,15 +68,17 @@ struct LRUHandle {
 // table implementations in some of the compiler/runtime combinations
 // we have tested.  E.g., readrandom speeds up by ~5% over the g++
 // 4.4.3's builtin hashtable.
-class HandleTable {
+class HandleTable {     // non-thread-saft implement
  public:
   HandleTable() : length_(0), elems_(0), list_(NULL) { Resize(); }
   ~HandleTable() { delete[] list_; }
 
+  // 查找 key-hash 是否在 hashtable 里
   LRUHandle* Lookup(const Slice& key, uint32_t hash) {
     return *FindPointer(key, hash);
   }
 
+  // Insert h
   LRUHandle* Insert(LRUHandle* h) {
     LRUHandle** ptr = FindPointer(h->key(), h->hash);
     LRUHandle* old = *ptr;
@@ -93,11 +95,12 @@ class HandleTable {
     return old;
   }
 
+  // 将 key-hash 从 hashtable 中移除，并不释放 handle
   LRUHandle* Remove(const Slice& key, uint32_t hash) {
     LRUHandle** ptr = FindPointer(key, hash);
     LRUHandle* result = *ptr;
     if (result != NULL) {
-      *ptr = result->next_hash;
+      *ptr = result->next_hash; // 如果result是list结尾，则result->next_hash 为 NULL，即清空了 *ptr
       --elems_;
     }
     return result;
@@ -106,9 +109,9 @@ class HandleTable {
  private:
   // The table consists of an array of buckets where each bucket is
   // a linked list of cache entries that hash into the bucket.
-  uint32_t length_;
-  uint32_t elems_;
-  LRUHandle** list_;
+  uint32_t length_;         // list_ 能够容纳的个数(cap), bucket的大小
+  uint32_t elems_;          // hashtable 中元素的个数
+  LRUHandle** list_;        // 持有handle的list hash(不连续)存放, 其实是bucket的list
 
   // Return a pointer to slot that points to a cache entry that
   // matches key/hash.  If there is no such cache entry, return a
@@ -122,17 +125,18 @@ class HandleTable {
     return ptr;
   }
 
+  // rehash, 充分存放(分布) handle entry
   void Resize() {
     uint32_t new_length = 4;
     while (new_length < elems_) {
-      new_length *= 2;
+      new_length *= 2;      // 2^n 增长length
     }
     LRUHandle** new_list = new LRUHandle*[new_length];
     memset(new_list, 0, sizeof(new_list[0]) * new_length);
     uint32_t count = 0;
     for (uint32_t i = 0; i < length_; i++) {
       LRUHandle* h = list_[i];
-      while (h != NULL) {
+      while (h != NULL) {   // 会将原本每个bucket的list倒序，不强调顺序
         LRUHandle* next = h->next_hash;
         uint32_t hash = h->hash;
         LRUHandle** ptr = &new_list[hash & (new_length - 1)];
@@ -149,6 +153,8 @@ class HandleTable {
   }
 };
 
+// 实现了一套多分片`ShardedLRUCache`, LRUCache是其中每个分片的实现.
+// thread-safe
 // A single shard of sharded cache.
 class LRUCache {
  public:
@@ -174,8 +180,8 @@ class LRUCache {
  private:
   void LRU_Remove(LRUHandle* e);
   void LRU_Append(LRUHandle*list, LRUHandle* e);
-  void Ref(LRUHandle* e);
-  void Unref(LRUHandle* e);
+  void Ref(LRUHandle* e);   // 引用计数++, 从lru_移动到in_use_
+  void Unref(LRUHandle* e); // 引用计数--, 从in_use_移动到lru_
   bool FinishErase(LRUHandle* e);
 
   // Initialized before use.
@@ -206,7 +212,7 @@ LRUCache::LRUCache()
   in_use_.prev = &in_use_;
 }
 
-LRUCache::~LRUCache() {
+LRUCache::~LRUCache() {              // 析构前需要release全部handle
   assert(in_use_.next == &in_use_);  // Error if caller has an unreleased handle
   for (LRUHandle* e = lru_.next; e != &lru_; ) {
     LRUHandle* next = e->next;
@@ -287,10 +293,10 @@ Cache::Handle* LRUCache::Insert(
     e->in_cache = true;
     LRU_Append(&in_use_, e);
     usage_ += charge;
-    FinishErase(table_.Insert(e));
+    FinishErase(table_.Insert(e));  // insert 返回 key-hash的老节点，擦除老节点
   } // else don't cache.  (Tests use capacity_==0 to turn off caching.)
 
-  while (usage_ > capacity_ && lru_.next != &lru_) {
+  while (usage_ > capacity_ && lru_.next != &lru_) {    // 清空大于容量的缓存节点
     LRUHandle* old = lru_.next;
     assert(old->refs == 1);
     bool erased = FinishErase(table_.Remove(old->key(), old->hash));
@@ -333,7 +339,7 @@ void LRUCache::Prune() {
 }
 
 static const int kNumShardBits = 4;
-static const int kNumShards = 1 << kNumShardBits;
+static const int kNumShards = 1 << kNumShardBits;   // 32 个分片
 
 class ShardedLRUCache : public Cache {
  private:

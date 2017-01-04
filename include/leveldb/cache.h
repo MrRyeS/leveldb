@@ -37,8 +37,8 @@ class Cache {
   // function that was passed to the constructor.
   virtual ~Cache();
 
-  // Opaque handle to an entry stored in the cache.
-  struct Handle { };
+  // Opaque(不透明的) handle to an entry stored in the cache.
+  struct Handle { };    // 各个操作返回的标识、凭据
 
   // Insert a mapping from key->value into the cache and assign it
   // the specified charge against the total cache capacity.
@@ -88,6 +88,7 @@ class Cache {
   // leveldb may change Prune() to a pure abstract method.
   virtual void Prune() {}
 
+  // 返回 cache 容量
   // Return an estimate of the combined charges of all elements stored in the
   // cache.
   virtual size_t TotalCharge() const = 0;
