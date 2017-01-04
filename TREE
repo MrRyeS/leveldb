@@ -67,8 +67,8 @@
 │       ├── comparator.h		// 比较器 定义
 │       ├── db.h
 │       ├── dumpfile.h
-│       ├── env.h
-│       ├── filter_policy.h
+│       ├── env.h			// env 定义
+│       ├── filter_policy.h		// FilterPolicy 定义
 │       ├── iterator.h
 │       ├── options.h			// db open/read/write配置
 │       ├── slice.h			// const byte[] 的实现
@@ -106,11 +106,11 @@
     ├── arena.cc
     ├── arena.h
     ├── arena_test.cc
-    ├── bloom.cc
-    ├── bloom_test.cc
+    ├── bloom.cc			// bloomfilter FilterPolicy实现
+    ├── bloom_test.cc			// bloomfilter FilterPolicy实现
     ├── cache.cc			// LRUCache 实现
     ├── cache_test.cc			// LRUCache 测试
-    ├── filter_policy.cc
+    ├── filter_policy.cc		// FilterPolicy 虚析构函数实现
     ├── coding.cc			// varint 实现
     ├── coding.h			// varint 实现
     ├── coding_test.cc			// varint 实现

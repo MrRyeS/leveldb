@@ -32,7 +32,8 @@ class FilterPolicy {
   // passed to methods of this type.
   virtual const char* Name() const = 0;
 
-  // keys[0,n-1] contains a list of keys (potentially with duplicates)
+  // 输入 n 个 slice (key) 产生一个 filter data (bitmap) 存储在 dst
+  // keys[0,n-1] contains a list of keys (potentially with duplicates)  // keys 可能有重复
   // that are ordered according to the user supplied comparator.
   // Append a filter that summarizes keys[0,n-1] to *dst.
   //
@@ -41,6 +42,7 @@ class FilterPolicy {
   virtual void CreateFilter(const Slice* keys, int n, std::string* dst)
       const = 0;
 
+  // 根据filter data 和 输入的 key 判断 key 是否存在于之前输出的那n个keys里
   // "filter" contains the data appended by a preceding call to
   // CreateFilter() on this class.  This method must return true if
   // the key was in the list of keys passed to CreateFilter().
@@ -49,6 +51,10 @@ class FilterPolicy {
   virtual bool KeyMayMatch(const Slice& key, const Slice& filter) const = 0;
 };
 
+// false positive: 假阳性; return false的说明一定不存在，return true的不一定真的存在
+// https://my.oschina.net/kiwivip/blog/133498
+// http://www.cnblogs.com/loujiayu/p/3821108.html
+//
 // Return a new filter policy that uses a bloom filter with approximately
 // the specified number of bits per key.  A good value for bits_per_key
 // is 10, which yields a filter with ~ 1% false positive rate.
