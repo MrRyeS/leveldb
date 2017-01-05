@@ -13,6 +13,9 @@
 
 namespace leveldb {
 
+// arena a light-weight memory pool implement
+// non-thread-safe
+// 使用时,只负责分配内存,析构时统一释放,有点像nginx的ngx_pool_t/ngx_palloc
 class Arena {
  public:
   Arena();
@@ -34,15 +37,15 @@ class Arena {
   char* AllocateFallback(size_t bytes);
   char* AllocateNewBlock(size_t block_bytes);
 
-  // Allocation state
-  char* alloc_ptr_;
-  size_t alloc_bytes_remaining_;
+  // Allocation state                         // 内存分配的最小单位为block,不能完整使用一个block的内存时会复用同一个block
+  char* alloc_ptr_;                           // 复用的block缓存地址
+  size_t alloc_bytes_remaining_;              // alloc_ptr_剩余大小
 
   // Array of new[] allocated memory blocks
-  std::vector<char*> blocks_;
+  std::vector<char*> blocks_;               // 存储 AllocateNewBlock 分配的 block
 
   // Total memory usage of the arena.
-  port::AtomicPointer memory_usage_;
+  port::AtomicPointer memory_usage_;        // 记录pool中使用的内存大小, 未包含碎片/冗余大小
 
   // No copying allowed
   Arena(const Arena&);

@@ -20,6 +20,8 @@ Arena::~Arena() {
   }
 }
 
+// > 1024 bytes 直接分配一个新的block
+// < 1024 bytes 时,调用该函数时,就说明alloc_bytes_remaining_<bytes了,因此重新分配一个block放在缓存区
 char* Arena::AllocateFallback(size_t bytes) {
   if (bytes > kBlockSize / 4) {
     // Object is more than a quarter of our block size.  Allocate it separately
@@ -39,7 +41,7 @@ char* Arena::AllocateFallback(size_t bytes) {
 }
 
 char* Arena::AllocateAligned(size_t bytes) {
-  const int align = (sizeof(void*) > 8) ? sizeof(void*) : 8;
+  const int align = (sizeof(void*) > 8) ? sizeof(void*) : 8;        // 最大按 8bit 对齐
   assert((align & (align-1)) == 0);   // Pointer size should be a power of 2
   size_t current_mod = reinterpret_cast<uintptr_t>(alloc_ptr_) & (align-1);
   size_t slop = (current_mod == 0 ? 0 : align - current_mod);
