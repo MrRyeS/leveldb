@@ -24,7 +24,7 @@
 namespace leveldb {
 
 // WriteBatch header has an 8-byte sequence number followed by a 4-byte count.
-static const size_t kHeader = 12;
+static const size_t kHeader = 12; // sizeof(uint64) + sizeof(uint32)
 
 WriteBatch::WriteBatch() {
   Clear();
@@ -39,6 +39,8 @@ void WriteBatch::Clear() {
   rep_.resize(kHeader);
 }
 
+// 用一个handler callback遍历batch, batch中的PUT会传递给handler->Put(key, value),
+// DELETE会传递handler->Delete(key)
 Status WriteBatch::Iterate(Handler* handler) const {
   Slice input(rep_);
   if (input.size() < kHeader) {
@@ -91,21 +93,22 @@ SequenceNumber WriteBatchInternal::Sequence(const WriteBatch* b) {
   return SequenceNumber(DecodeFixed64(b->rep_.data()));
 }
 
+// DB::Write will call this function
 void WriteBatchInternal::SetSequence(WriteBatch* b, SequenceNumber seq) {
   EncodeFixed64(&b->rep_[0], seq);
 }
 
 void WriteBatch::Put(const Slice& key, const Slice& value) {
-  WriteBatchInternal::SetCount(this, WriteBatchInternal::Count(this) + 1);
-  rep_.push_back(static_cast<char>(kTypeValue));
-  PutLengthPrefixedSlice(&rep_, key);
-  PutLengthPrefixedSlice(&rep_, value);
+  WriteBatchInternal::SetCount(this, WriteBatchInternal::Count(this) + 1);  // count++
+  rep_.push_back(static_cast<char>(kTypeValue));                            // add value type
+  PutLengthPrefixedSlice(&rep_, key);                                       // add varstring key
+  PutLengthPrefixedSlice(&rep_, value);                                     // add varstring value
 }
 
 void WriteBatch::Delete(const Slice& key) {
-  WriteBatchInternal::SetCount(this, WriteBatchInternal::Count(this) + 1);
-  rep_.push_back(static_cast<char>(kTypeDeletion));
-  PutLengthPrefixedSlice(&rep_, key);
+  WriteBatchInternal::SetCount(this, WriteBatchInternal::Count(this) + 1);  // count++
+  rep_.push_back(static_cast<char>(kTypeDeletion));                         // add value type
+  PutLengthPrefixedSlice(&rep_, key);                                       // add varstring key
 }
 
 namespace {

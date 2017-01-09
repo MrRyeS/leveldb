@@ -3,8 +3,8 @@
 │   ├── autocompact_test.cc
 │   ├── builder.cc
 │   ├── builder.h
-│   ├── c.cc
-│   ├── c_test.c
+│   ├── c.cc				// C bindings for leveldb
+│   ├── c_test.c			// C bindings for leveldb
 │   ├── corruption_test.cc
 │   ├── db_bench.cc
 │   ├── db_impl.cc
@@ -12,13 +12,13 @@
 │   ├── db_iter.cc
 │   ├── db_iter.h
 │   ├── db_test.cc
-│   ├── dbformat.cc
-│   ├── dbformat.h
+│   ├── dbformat.cc 			// db内部使用的key、comapator定义实现
+│   ├── dbformat.h			// db内部使用的key、comapator定义实现
 │   ├── dbformat_test.cc
 │   ├── dumpfile.cc
 │   ├── fault_injection_test.cc
-│   ├── filename.cc
-│   ├── filename.h
+│   ├── filename.cc 			// db内部关于文件名的生成函数、解析函数
+│   ├── filename.h 			// db内部关于文件名的生成函数、解析函数
 │   ├── filename_test.cc
 │   ├── leveldbutil.cc
 │   ├── log_format.h
@@ -62,14 +62,14 @@
 │       └── memenv_test.cc		// 基于内存的 env 的实现
 ├── include
 │   └── leveldb
-│       ├── c.h
+│       ├── c.h 			// C bindings for leveldb
 │       ├── cache.h			// Cache 定义
 │       ├── comparator.h		// 比较器 定义
-│       ├── db.h
+│       ├── db.h 			// ::DB定义
 │       ├── dumpfile.h
 │       ├── env.h			// env 定义
 │       ├── filter_policy.h		// FilterPolicy 定义
-│       ├── iterator.h
+│       ├── iterator.h			// 迭代器定义
 │       ├── options.h			// db open/read/write配置
 │       ├── slice.h			// const byte[] 的实现
 │       ├── status.h			// status 返回值实现

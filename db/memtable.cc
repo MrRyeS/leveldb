@@ -30,14 +30,18 @@ MemTable::~MemTable() {
 
 size_t MemTable::ApproximateMemoryUsage() { return arena_.MemoryUsage(); }
 
+// aptr/bptr 为varstring， 即| n (varint 1-5 bytes) | data (n bytes) |
 int MemTable::KeyComparator::operator()(const char* aptr, const char* bptr)
     const {
   // Internal keys are encoded as length-prefixed strings.
   Slice a = GetLengthPrefixedSlice(aptr);
   Slice b = GetLengthPrefixedSlice(bptr);
-  return comparator.Compare(a, b);
+  return comparator.Compare(a, b); // 这里调用的是`int InternalKeyComparator::Compare(const Slice& akey, const Slice& bkey) const`
+                                   // 按user key 升序，user key相等时再按sequence降序排列，因此当能user key
+                                   // match到时，能够获得最近操作的record。
 }
 
+// encode to varstring: | n (varint 1-5 bytes) | data (n bytes) |
 // Encode a suitable internal key target for "target" and return it.
 // Uses *scratch as scratch space, and the returned pointer will point
 // into this scratch space.
@@ -102,7 +106,7 @@ void MemTable::Add(SequenceNumber s, ValueType type,
   p = EncodeVarint32(p, val_size);
   memcpy(p, value.data(), val_size);
   assert((p + val_size) - buf == encoded_len);
-  table_.Insert(buf);
+  table_.Insert(buf);   // 一个key的多次操作由于sequence不同，因此并不会造成insert的冲突。
 }
 
 bool MemTable::Get(const LookupKey& key, std::string* value, Status* s) {
@@ -119,12 +123,14 @@ bool MemTable::Get(const LookupKey& key, std::string* value, Status* s) {
     // Check that it belongs to same user key.  We do not check the
     // sequence number since the Seek() call above should have skipped
     // all entries with overly large sequence numbers.
+    // 由于Seek调用的排序为int InternalKeyComparator::Compare(const Slice& akey, const Slice& bkey) const
+    // 按user key 升序；user key相等时按sequence降序；因此会获取最近操作user key的一个record.
     const char* entry = iter.key();
     uint32_t key_length;
     const char* key_ptr = GetVarint32Ptr(entry, entry+5, &key_length);
     if (comparator_.comparator.user_comparator()->Compare(
             Slice(key_ptr, key_length - 8),
-            key.user_key()) == 0) {
+            key.user_key()) == 0) { // user key 相等时
       // Correct user key
       const uint64_t tag = DecodeFixed64(key_ptr + key_length - 8);
       switch (static_cast<ValueType>(tag & 0xff)) {

@@ -11,6 +11,8 @@
 
 namespace leveldb {
 
+// 将指定文件(fname)dump到dst, fname支持.log,.sst,.ldb,MANIFEST-*文件
+//
 // Dump the contents of the file named by fname in text format to
 // *dst.  Makes a sequence of dst->Append() calls; each call is passed
 // the newline-terminated text corresponding to a single item found

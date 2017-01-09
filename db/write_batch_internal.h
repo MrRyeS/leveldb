@@ -41,6 +41,7 @@ class WriteBatchInternal {
 
   static Status InsertInto(const WriteBatch* batch, MemTable* memtable);
 
+  // merge(append) batch src into dst
   static void Append(WriteBatch* dst, const WriteBatch* src);
 };
 

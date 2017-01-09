@@ -49,6 +49,8 @@ class WriteBatch {
     virtual void Put(const Slice& key, const Slice& value) = 0;
     virtual void Delete(const Slice& key) = 0;
   };
+  // 用一个handler callback遍历batch, batch中的PUT会传递给handler->Put(key, value),
+  // DELETE会传递handler->Delete(key)
   Status Iterate(Handler* handler) const;
 
  private:

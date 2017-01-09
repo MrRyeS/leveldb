@@ -148,10 +148,12 @@ class DB {
   void operator=(const DB&);
 };
 
+// 当该db没有在被使用时,清空name文件夹
 // Destroy the contents of the specified database.
 // Be very careful using this method.
 Status DestroyDB(const std::string& name, const Options& options);
 
+// 修复dbname文件夹中的文件
 // If a DB cannot be opened, you may attempt to call this method to
 // resurrect as much of the contents of the database as possible.
 // Some data may be lost, so be careful when calling this function

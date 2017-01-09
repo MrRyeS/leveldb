@@ -75,9 +75,10 @@ struct ParsedInternalKey {
   ParsedInternalKey() { }  // Intentionally left uninitialized (for speed)
   ParsedInternalKey(const Slice& u, const SequenceNumber& seq, ValueType t)
       : user_key(u), sequence(seq), type(t) { }
-  std::string DebugString() const;
+  std::string DebugString() const;  // output string
 };
 
+// unused so far InternalKeyEncodingLength
 // Return the length of the encoding of "key".
 inline size_t InternalKeyEncodingLength(const ParsedInternalKey& key) {
   return key.user_key.size() + 8;
@@ -100,6 +101,7 @@ inline Slice ExtractUserKey(const Slice& internal_key) {
   return Slice(internal_key.data(), internal_key.size() - 8);
 }
 
+// Returns the value type portion of an internal key.
 inline ValueType ExtractValueType(const Slice& internal_key) {
   assert(internal_key.size() >= 8);
   const size_t n = internal_key.size();
@@ -115,7 +117,9 @@ class InternalKeyComparator : public Comparator {
   const Comparator* user_comparator_;
  public:
   explicit InternalKeyComparator(const Comparator* c) : user_comparator_(c) { }
-  virtual const char* Name() const;
+  virtual const char* Name() const; // override
+  // compare with internal key's raw data
+  // first compare user key, if equal compare sequence number
   virtual int Compare(const Slice& a, const Slice& b) const;
   virtual void FindShortestSeparator(
       std::string* start,
@@ -124,6 +128,7 @@ class InternalKeyComparator : public Comparator {
 
   const Comparator* user_comparator() const { return user_comparator_; }
 
+  // compare with internal key
   int Compare(const InternalKey& a, const InternalKey& b) const;
 };
 
@@ -138,12 +143,15 @@ class InternalFilterPolicy : public FilterPolicy {
   virtual bool KeyMayMatch(const Slice& key, const Slice& filter) const;
 };
 
+// InternalKey 是leveldb内部使用的一个key模型,由`用户输入的key`+`SequenceNumber`+`ValueType`
+// 复合而成。格式: | User key (string) | sequence number (7 bytes) | value type (1 byte) |
+//
 // Modules in this directory should keep internal keys wrapped inside
 // the following class instead of plain strings so that we do not
 // incorrectly use string comparisons instead of an InternalKeyComparator.
 class InternalKey {
  private:
-  std::string rep_;
+  std::string rep_;   // | User key (string) | sequence number (7 bytes) | value type (1 byte) |
  public:
   InternalKey() { }   // Leave rep_ as empty to indicate it is invalid
   InternalKey(const Slice& user_key, SequenceNumber s, ValueType t) {
@@ -156,6 +164,7 @@ class InternalKey {
     return rep_;
   }
 
+  // Returns the user key portion of an internal key.
   Slice user_key() const { return ExtractUserKey(rep_); }
 
   void SetFrom(const ParsedInternalKey& p) {
@@ -185,6 +194,9 @@ inline bool ParseInternalKey(const Slice& internal_key,
   return (c <= static_cast<unsigned char>(kTypeValue));
 }
 
+// 构造一个存储data的slice
+// | data size(varint 1-4 bytes) | data (size bytes) | sequence number (3 byte) | value type (1 byte) |
+//
 // A helper class useful for DBImpl::Get()
 class LookupKey {
  public:

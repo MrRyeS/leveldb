@@ -101,7 +101,7 @@ class SkipList {
   Comparator const compare_;
   Arena* const arena_;    // Arena used for allocations of nodes
 
-  Node* const head_;
+  Node* const head_;      // head list of n height heads, is must kMaxHeight element array
 
   // Modified only by Insert().  Read racily by readers, but stale
   // values are ok.
@@ -176,7 +176,7 @@ struct SkipList<Key,Comparator>::Node {
 
  private:
   // Array of length equal to the node height.  next_[0] is lowest level link.
-  port::AtomicPointer next_[1];
+  port::AtomicPointer next_[1]; // 利用的hack 变长数组的实现
 };
 
 template<typename Key, class Comparator>
@@ -254,7 +254,7 @@ int SkipList<Key,Comparator>::RandomHeight() {
 
 template<typename Key, class Comparator>
 bool SkipList<Key,Comparator>::KeyIsAfterNode(const Key& key, Node* n) const {
-  // NULL n is considered infinite
+  // NULL n is considered infinite (+∞)
   return (n != NULL) && (compare_(n->key, key) < 0);
 }
 
@@ -325,7 +325,7 @@ template<typename Key, class Comparator>
 SkipList<Key,Comparator>::SkipList(Comparator cmp, Arena* arena)
     : compare_(cmp),
       arena_(arena),
-      head_(NewNode(0 /* any key will do */, kMaxHeight)),
+      head_(NewNode(0 /* any key will do */, kMaxHeight)), // head_ lenght must is kMaxHeight
       max_height_(reinterpret_cast<void*>(1)),
       rnd_(0xdeadbeef) {
   for (int i = 0; i < kMaxHeight; i++) {
@@ -344,7 +344,7 @@ void SkipList<Key,Comparator>::Insert(const Key& key) {
   assert(x == NULL || !Equal(key, x->key));
 
   int height = RandomHeight();
-  if (height > GetMaxHeight()) {
+  if (height > GetMaxHeight()) { // 产生了一个大于当前最大高度的节点时，更新前驱和当前最大高度。
     for (int i = GetMaxHeight(); i < height; i++) {
       prev[i] = head_;
     }
@@ -364,11 +364,12 @@ void SkipList<Key,Comparator>::Insert(const Key& key) {
   for (int i = 0; i < height; i++) {
     // NoBarrier_SetNext() suffices since we will add a barrier when
     // we publish a pointer to "x" in prev[i].
-    x->NoBarrier_SetNext(i, prev[i]->NoBarrier_Next(i));
-    prev[i]->SetNext(i, x);
+    x->NoBarrier_SetNext(i, prev[i]->NoBarrier_Next(i));    // 更新当前节点的next指针
+    prev[i]->SetNext(i, x);                                 // 更新前驱节点的next指针
   }
 }
 
+// find key in this SkipList
 template<typename Key, class Comparator>
 bool SkipList<Key,Comparator>::Contains(const Key& key) const {
   Node* x = FindGreaterOrEqual(key, NULL);

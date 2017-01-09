@@ -87,6 +87,8 @@ static void ClipToRange(T* ptr, V minvalue, V maxvalue) {
   if (static_cast<V>(*ptr) > maxvalue) *ptr = maxvalue;
   if (static_cast<V>(*ptr) < minvalue) *ptr = minvalue;
 }
+
+// 校验参数
 Options SanitizeOptions(const std::string& dbname,
                         const InternalKeyComparator* icmp,
                         const InternalFilterPolicy* ipolicy,
@@ -101,15 +103,15 @@ Options SanitizeOptions(const std::string& dbname,
   if (result.info_log == NULL) {
     // Open a log file in the same directory as the db
     src.env->CreateDir(dbname);  // In case it does not exist
-    src.env->RenameFile(InfoLogFileName(dbname), OldInfoLogFileName(dbname));
-    Status s = src.env->NewLogger(InfoLogFileName(dbname), &result.info_log);
+    src.env->RenameFile(InfoLogFileName(dbname), OldInfoLogFileName(dbname)); // rename `LOG` to `LOG.old`
+    Status s = src.env->NewLogger(InfoLogFileName(dbname), &result.info_log); // create default logger
     if (!s.ok()) {
       // No place suitable for logging
       result.info_log = NULL;
     }
   }
   if (result.block_cache == NULL) {
-    result.block_cache = NewLRUCache(8 << 20);
+    result.block_cache = NewLRUCache(8 << 20); // create default cache 8MB
   }
   return result;
 }
@@ -118,7 +120,7 @@ DBImpl::DBImpl(const Options& raw_options, const std::string& dbname)
     : env_(raw_options.env),
       internal_comparator_(raw_options.comparator),
       internal_filter_policy_(raw_options.filter_policy),
-      options_(SanitizeOptions(dbname, &internal_comparator_,
+      options_(SanitizeOptions(dbname, &internal_comparator_,           // 返回经过校验的options
                                &internal_filter_policy_, raw_options)),
       owns_info_log_(options_.info_log != raw_options.info_log),
       owns_cache_(options_.block_cache != raw_options.block_cache),
@@ -1198,7 +1200,9 @@ Status DBImpl::Write(const WriteOptions& options, WriteBatch* my_batch) {
   w.done = false;
 
   MutexLock l(&mutex_);
-  writers_.push_back(&w);
+  writers_.push_back(&w);   // 将该batch的Writer加入队列
+  // 等待执行到本次的Writer, 此处逻辑应为控制并发Write时(既有用户并发Write、又有bg compaction)的
+  // 写入顺序问题.
   while (!w.done && &w != writers_.front()) {
     w.cv.Wait();
   }
@@ -1321,7 +1325,7 @@ Status DBImpl::MakeRoomForWrite(bool force) {
   bool allow_delay = !force;
   Status s;
   while (true) {
-    if (!bg_error_.ok()) {
+    if (!bg_error_.ok()) {      // 有bg_error时，返回error
       // Yield previous error
       s = bg_error_;
       break;
@@ -1544,7 +1548,7 @@ Status DestroyDB(const std::string& dbname, const Options& options) {
   }
 
   FileLock* lock;
-  const std::string lockname = LockFileName(dbname);
+  const std::string lockname = LockFileName(dbname);                // 获取db lockfile 名称(db dir/LOCK)
   Status result = env->LockFile(lockname, &lock);
   if (result.ok()) {
     uint64_t number;

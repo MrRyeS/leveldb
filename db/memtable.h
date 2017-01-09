@@ -66,7 +66,8 @@ class MemTable {
   struct KeyComparator {
     const InternalKeyComparator comparator;
     explicit KeyComparator(const InternalKeyComparator& c) : comparator(c) { }
-    int operator()(const char* a, const char* b) const;
+    int operator()(const char* a, const char* b) const; // a/b 为varstring， 即| n (varint 1-5 bytes) | data (n bytes) |
+                                                        // 结合Table的data的内存分布来看，就是只比较key的大小
   };
   friend class MemTableIterator;
   friend class MemTableBackwardIterator;
@@ -75,8 +76,9 @@ class MemTable {
 
   KeyComparator comparator_;
   int refs_;
-  Arena arena_;
-  Table table_;
+  Arena arena_; // SkipList
+  Table table_; // SkipList<const char*, KeyComparator>, 表中的data的内存布局为:
+                // | n (varint,key部分内存,含sequence) | key data (n-8 bytes) | sequence (8 bytes) | m (varint,val data) | val data (m bytes) |
 
   // No copying allowed
   MemTable(const MemTable&);
