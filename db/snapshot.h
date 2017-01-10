@@ -12,6 +12,15 @@ namespace leveldb {
 
 class SnapshotList;
 
+// Snapshot 存储的是immutable数据，对外提供的访问方法是线程安全的
+//
+// leveldb 实现快照的原理关键就在于那个sequence number。每当插入一条记录时，
+// 都会插入一个独一无二的序列号，而且这个序列号是递增的。所以当插入两条记录
+// 的键值一样时，只能通过序列号来区分哪条记录是最新的，因为系统返回的是最新
+// 的。而快照SnapShot类的实现原理就是，当调用函数获取一个快照时，就获取目前
+// 的sequence number，当读取数据时，只读取小于等于这个序列号的记录，这样就可
+// 以读取这个快照时间点之前的数据了。
+//
 // Snapshots are kept in a doubly-linked list in the DB.
 // Each SnapshotImpl corresponds to a particular sequence number.
 class SnapshotImpl : public Snapshot {
@@ -28,6 +37,9 @@ class SnapshotImpl : public Snapshot {
   SnapshotList* list_;                 // just for sanity checks
 };
 
+// DB中持有全部Snapshot的链表.
+// DBImpl::GetSnapshot()时在链表中加入一个节点
+// DBImpl::ReleaseSnapshot()时释放
 class SnapshotList {
  public:
   SnapshotList() {

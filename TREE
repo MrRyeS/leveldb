@@ -33,7 +33,7 @@
 │   ├── repair.cc
 │   ├── skiplist.h			// skiplist 数据结构实现 memtable 等使用
 │   ├── skiplist_test.cc		// skiplist 数据结构实现 memtable 等使用
-│   ├── snapshot.h
+│   ├── snapshot.h			// SnapshopList Snapshot实现
 │   ├── table_cache.cc
 │   ├── table_cache.h
 │   ├── version_edit.cc
