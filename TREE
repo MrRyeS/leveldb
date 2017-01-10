@@ -20,7 +20,7 @@
 │   ├── filename.cc 			// db内部关于文件名的生成函数、解析函数
 │   ├── filename.h 			// db内部关于文件名的生成函数、解析函数
 │   ├── filename_test.cc
-│   ├── leveldbutil.cc
+│   ├── leveldbutil.cc			// 一个dump指定文件的工具
 │   ├── log_format.h			// leveldb binlog实现
 │   ├── log_reader.cc			// leveldb binlog实现
 │   ├── log_reader.h			// leveldb binlog实现

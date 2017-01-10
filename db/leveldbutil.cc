@@ -10,6 +10,7 @@
 namespace leveldb {
 namespace {
 
+// 输出 dump 指定文件
 class StdoutPrinter : public WritableFile {
  public:
   virtual Status Append(const Slice& data) {
