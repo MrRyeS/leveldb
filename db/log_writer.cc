@@ -43,9 +43,9 @@ Status Writer::AddRecord(const Slice& slice) {
   Status s;
   bool begin = true;
   do {
-    const int leftover = kBlockSize - block_offset_;
+    const int leftover = kBlockSize - block_offset_;  // 当前block剩余空间
     assert(leftover >= 0);
-    if (leftover < kHeaderSize) {
+    if (leftover < kHeaderSize) {                     // 剩余空间小于kHeaderSize时，将剩余填充为0，再新起一个block
       // Switch to a new block
       if (leftover > 0) {
         // Fill the trailer (literal below relies on kHeaderSize being 7)
@@ -101,7 +101,7 @@ Status Writer::EmitPhysicalRecord(RecordType t, const char* ptr, size_t n) {
   if (s.ok()) {
     s = dest_->Append(Slice(ptr, n));
     if (s.ok()) {
-      s = dest_->Flush();
+      s = dest_->Flush();           // 为了保证写log record成功必须flush
     }
   }
   block_offset_ += kHeaderSize + n;

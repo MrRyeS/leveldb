@@ -33,6 +33,8 @@ Reader::~Reader() {
   delete[] backing_store_;
 }
 
+// 当初始化Reader时 initial_offset != 0 需要执行该函数跳过一段block
+// 校正`end_of_buffer_offset_`
 bool Reader::SkipToInitialBlock() {
   size_t offset_in_block = initial_offset_ % kBlockSize;
   uint64_t block_start_location = initial_offset_ - offset_in_block;
@@ -57,6 +59,8 @@ bool Reader::SkipToInitialBlock() {
   return true;
 }
 
+// 读取一个完整的user record，scratch用于函数内部辅助存储数据。返回的record使用的内存可能是Reader预分配的，
+// 也可能是scratch的。
 bool Reader::ReadRecord(Slice* record, std::string* scratch) {
   if (last_record_offset_ < initial_offset_) {
     if (!SkipToInitialBlock()) {
@@ -83,12 +87,12 @@ bool Reader::ReadRecord(Slice* record, std::string* scratch) {
 
     if (resyncing_) {
       if (record_type == kMiddleType) {
-        continue;
+        continue;   // 当initial_offset_ > 0 时，跳过一个完整的user record
       } else if (record_type == kLastType) {
-        resyncing_ = false;
+        resyncing_ = false; // 标识已经跳过完成，最后一个分片
         continue;
       } else {
-        resyncing_ = false;
+        resyncing_ = false; // 跳过完成
       }
     }
 
@@ -196,6 +200,7 @@ void Reader::ReportDrop(uint64_t bytes, const Status& reason) {
   }
 }
 
+// 读取一个block
 unsigned int Reader::ReadPhysicalRecord(Slice* result) {
   while (true) {
     if (buffer_.size() < kHeaderSize) {
@@ -218,7 +223,7 @@ unsigned int Reader::ReadPhysicalRecord(Slice* result) {
         // end of the file, which can be caused by the writer crashing in the
         // middle of writing the header. Instead of considering this an error,
         // just report EOF.
-        buffer_.clear();
+        buffer_.clear(); // 文件末尾不足kHeaderSize的数据忽略，正确的情况下，这部分data应该是填充的0
         return kEof;
       }
     }
@@ -229,7 +234,7 @@ unsigned int Reader::ReadPhysicalRecord(Slice* result) {
     const uint32_t b = static_cast<uint32_t>(header[5]) & 0xff;
     const unsigned int type = header[6];
     const uint32_t length = a | (b << 8);
-    if (kHeaderSize + length > buffer_.size()) {
+    if (kHeaderSize + length > buffer_.size()) { // 文件可能被截断
       size_t drop_size = buffer_.size();
       buffer_.clear();
       if (!eof_) {
@@ -272,7 +277,7 @@ unsigned int Reader::ReadPhysicalRecord(Slice* result) {
     if (end_of_buffer_offset_ - buffer_.size() - kHeaderSize - length <
         initial_offset_) {
       result->clear();
-      return kBadRecord;
+      return kBadRecord; // 返回bad 跳过 初始化offset之前的record
     }
 
     *result = Slice(header + kHeaderSize, length);

@@ -21,18 +21,18 @@
 │   ├── filename.h 			// db内部关于文件名的生成函数、解析函数
 │   ├── filename_test.cc
 │   ├── leveldbutil.cc
-│   ├── log_format.h
-│   ├── log_reader.cc
-│   ├── log_reader.h
-│   ├── log_test.cc
-│   ├── log_writer.cc
-│   ├── log_writer.h
+│   ├── log_format.h			// leveldb binlog实现
+│   ├── log_reader.cc			// leveldb binlog实现
+│   ├── log_reader.h			// leveldb binlog实现
+│   ├── log_test.cc			// leveldb binlog实现
+│   ├── log_writer.cc			// leveldb binlog实现
+│   ├── log_writer.h			// leveldb binlog实现
 │   ├── memtable.cc
 │   ├── memtable.h
 │   ├── recovery_test.cc
 │   ├── repair.cc
-│   ├── skiplist.h
-│   ├── skiplist_test.cc
+│   ├── skiplist.h			// skiplist 数据结构实现 memtable 等使用
+│   ├── skiplist_test.cc		// skiplist 数据结构实现 memtable 等使用
 │   ├── snapshot.h
 │   ├── table_cache.cc
 │   ├── table_cache.h

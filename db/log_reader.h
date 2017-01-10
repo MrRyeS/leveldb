@@ -61,8 +61,8 @@ class Reader {
   SequentialFile* const file_;
   Reporter* const reporter_;
   bool const checksum_;
-  char* const backing_store_;
-  Slice buffer_;
+  char* const backing_store_;   // block缓存  log文件按block来划分，因此每次读取一个block到该缓存
+  Slice buffer_;                // Slice of backing_store_
   bool eof_;   // Last Read() indicated EOF by returning < kBlockSize
 
   // Offset of the last record returned by ReadRecord.
