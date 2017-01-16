@@ -32,7 +32,7 @@ struct Table::Rep {
   const char* filter_data;
 
   BlockHandle metaindex_handle;  // Handle to metaindex_block: saved from footer
-  Block* index_block;
+  Block* index_block;            // saved from Table::Open
 };
 
 Status Table::Open(const Options& options,
@@ -40,10 +40,11 @@ Status Table::Open(const Options& options,
                    uint64_t size,
                    Table** table) {
   *table = NULL;
-  if (size < Footer::kEncodedLength) {
+  if (size < Footer::kEncodedLength) { // 文件最小大小为一个Footer大小
     return Status::Corruption("file is too short to be an sstable");
   }
 
+  // 先解析出Footer
   char footer_space[Footer::kEncodedLength];
   Slice footer_input;
   Status s = file->Read(size - Footer::kEncodedLength, Footer::kEncodedLength,
@@ -64,7 +65,7 @@ Status Table::Open(const Options& options,
     }
     s = ReadBlock(file, opt, footer.index_handle(), &contents);
     if (s.ok()) {
-      index_block = new Block(contents);
+      index_block = new Block(contents); // 生成 index block
     }
   }
 
@@ -276,7 +277,7 @@ uint64_t Table::ApproximateOffsetOf(const Slice& key) const {
     // key is past the last key in the file.  Approximate the offset
     // by returning the offset of the metaindex block (which is
     // right near the end of the file).
-    result = rep_->metaindex_handle.offset();
+    result = rep_->metaindex_handle.offset(); // data block的边界
   }
   delete index_iter;
   return result;

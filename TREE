@@ -1,11 +1,11 @@
 ├── Makefile
 ├── db
-│   ├── autocompact_test.cc
+│   ├── autocompact_test.cc		// bg compact test
 │   ├── builder.cc
 │   ├── builder.h
 │   ├── c.cc				// C bindings for leveldb
 │   ├── c_test.c			// C bindings for leveldb
-│   ├── corruption_test.cc
+│   ├── corruption_test.cc		// repaire 等功能测试
 │   ├── db_bench.cc
 │   ├── db_impl.cc
 │   ├── db_impl.h
@@ -47,13 +47,9 @@
 │   └── write_batch_test.cc
 ├── doc
 │   ├── bench				// benchmark 源码，参见benchmark文档
-│   │   ├── db_bench_sqlite3.cc
-│   │   └── db_bench_tree_db.cc
 │   ├── benchmark.html			// benchmark 文档
-│   ├── doc.css
-│   ├── impl.html
 │   ├── index.html			// 文档
-│   ├── log_format.txt
+│   ├── log_format.txt			// LOG 格式文档
 │   └── table_format.txt
 ├── helpers				// 辅助测试的工具集
 │   └── memenv				// 基于内存的 env 的实现
@@ -73,7 +69,7 @@
 │       ├── options.h			// db open/read/write配置
 │       ├── slice.h			// const byte[] 的实现
 │       ├── status.h			// status 返回值实现
-│       ├── table.h
+│       ├── table.h			// SST table 定义
 │       ├── table_builder.h
 │       └── write_batch.h
 ├── port				// 提供各个平台相关的基本接口，主要包含锁、条件变量、指针的原子读写
@@ -84,17 +80,17 @@
 │   ├── port_posix.h			// posix平台的相关实现，包含mutex、condvar
 │   └── thread_annotations.h		// 测试hook定义
 ├── table
-│   ├── block.cc
-│   ├── block.h
-│   ├── block_builder.cc
-│   ├── block_builder.h
+│   ├── block.cc			// Block 定义
+│   ├── block.h 			// Block 定义
+│   ├── block_builder.cc		// Block 生成方法 实现
+│   ├── block_builder.h 		// Block 生成方法 实现
 │   ├── filter_block.cc
 │   ├── filter_block.h
 │   ├── filter_block_test.cc
-│   ├── format.cc
-│   ├── format.h
-│   ├── iterator.cc
-│   ├── iterator_wrapper.h
+│   ├── format.cc			// Footer BlockHandle ReadBlock
+│   ├── format.h			// Footer BlockHandle ReadBlock
+│   ├── iterator.cc			// 迭代器定义实现
+│   ├── iterator_wrapper.h		// 迭代器定义实现
 │   ├── merger.cc
 │   ├── merger.h
 │   ├── table.cc

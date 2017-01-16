@@ -26,7 +26,7 @@ struct TableBuilder::Rep {
   BlockBuilder data_block;
   BlockBuilder index_block;
   std::string last_key;
-  int64_t num_entries;
+  int64_t num_entries;  // 当前Block的key数量
   bool closed;          // Either Finish() or Abandon() has been called.
   FilterBlockBuilder* filter_block;
 
@@ -39,7 +39,7 @@ struct TableBuilder::Rep {
   // blocks.
   //
   // Invariant: r->pending_index_entry is true only if data_block is empty.
-  bool pending_index_entry;
+  bool pending_index_entry;    // flag 标识当前Block为空，Flush后，新起一个Block，当前Block为空
   BlockHandle pending_handle;  // Handle to add to index block
 
   std::string compressed_output;
@@ -99,9 +99,9 @@ void TableBuilder::Add(const Slice& key, const Slice& value) {
 
   if (r->pending_index_entry) {
     assert(r->data_block.empty());
-    r->options.comparator->FindShortestSeparator(&r->last_key, key);
+    r->options.comparator->FindShortestSeparator(&r->last_key, key); // last_key 会改变为分割界限key
     std::string handle_encoding;
-    r->pending_handle.EncodeTo(&handle_encoding);
+    r->pending_handle.EncodeTo(&handle_encoding);                    // 第一个pending_handle会为空
     r->index_block.Add(r->last_key, Slice(handle_encoding));
     r->pending_index_entry = false;
   }

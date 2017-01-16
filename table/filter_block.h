@@ -38,8 +38,8 @@ class FilterBlockBuilder {
   void GenerateFilter();
 
   const FilterPolicy* policy_;
-  std::string keys_;              // Flattened key contents
-  std::vector<size_t> start_;     // Starting index in keys_ of each key
+  std::string keys_;              // Flattened key contents              将当前filter内的全部key拼接在一起，取key时根据start_切割。
+  std::vector<size_t> start_;     // Starting index in keys_ of each key 当前filter内每个key的size
   std::string result_;            // Filter data computed so far
   std::vector<Slice> tmp_keys_;   // policy_->CreateFilter() argument
   std::vector<uint32_t> filter_offsets_;
@@ -53,14 +53,15 @@ class FilterBlockReader {
  public:
  // REQUIRES: "contents" and *policy must stay live while *this is live.
   FilterBlockReader(const FilterPolicy* policy, const Slice& contents);
+  // 查找key是否存在block_offset该偏移量所在的Block中
   bool KeyMayMatch(uint64_t block_offset, const Slice& key);
 
  private:
   const FilterPolicy* policy_;
   const char* data_;    // Pointer to filter data (at block-start)
-  const char* offset_;  // Pointer to beginning of offset array (at block-end)
-  size_t num_;          // Number of entries in offset array
-  size_t base_lg_;      // Encoding parameter (see kFilterBaseLg in .cc file)
+  const char* offset_;  // Pointer to beginning of offset array (at block-end) filter offset开始的地址
+  size_t num_;          // Number of entries in offset array                   filter offset的个数
+  size_t base_lg_;      // Encoding parameter (see kFilterBaseLg in .cc file)  = log2(base) 每base字节生成一个filter
 };
 
 }

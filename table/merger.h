@@ -10,6 +10,8 @@ namespace leveldb {
 class Comparator;
 class Iterator;
 
+// 将多个迭代器合并起来当做一个迭代器来使用，每一次Prev、Next操作都需要遍历全部Iterator
+//
 // Return an iterator that provided the union of the data in
 // children[0,n-1].  Takes ownership of the child iterators and
 // will delete them when the result iterator is deleted.

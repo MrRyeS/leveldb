@@ -62,15 +62,15 @@ class TwoLevelIterator: public Iterator {
   void SetDataIterator(Iterator* data_iter);
   void InitDataBlock();
 
-  BlockFunction block_function_;
-  void* arg_;
-  const ReadOptions options_;
+  BlockFunction block_function_;// callback
+  void* arg_;                   // block_function_'s arg
+  const ReadOptions options_;   // block_function_'s arg
   Status status_;
   IteratorWrapper index_iter_;
   IteratorWrapper data_iter_; // May be NULL
   // If data_iter_ is non-NULL, then "data_block_handle_" holds the
   // "index_value" passed to block_function_ to create the data_iter_.
-  std::string data_block_handle_;
+  std::string data_block_handle_;   // 当前data block的 BlockHanle
 };
 
 TwoLevelIterator::TwoLevelIterator(
@@ -153,6 +153,7 @@ void TwoLevelIterator::SetDataIterator(Iterator* data_iter) {
   data_iter_.Set(data_iter);
 }
 
+// 根据index iter 指向的data block是否变化来决定是否更新data block iter
 void TwoLevelIterator::InitDataBlock() {
   if (!index_iter_.Valid()) {
     SetDataIterator(NULL);

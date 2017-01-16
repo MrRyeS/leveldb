@@ -17,7 +17,7 @@ namespace leveldb {
 
 inline uint32_t Block::NumRestarts() const {
   assert(size_ >= sizeof(uint32_t));
-  return DecodeFixed32(data_ + size_ - sizeof(uint32_t));
+  return DecodeFixed32(data_ + size_ - sizeof(uint32_t)); // block data 的最后4 bytes为重启点数
 }
 
 Block::Block(const BlockContents& contents)
@@ -67,6 +67,7 @@ static inline const char* DecodeEntry(const char* p, const char* limit,
     if ((p = GetVarint32Ptr(p, limit, value_length)) == NULL) return NULL;
   }
 
+  // 校验长度边界
   if (static_cast<uint32_t>(limit - p) < (*non_shared + *value_length)) {
     return NULL;
   }
@@ -83,7 +84,7 @@ class Block::Iter : public Iterator {
   // current_ is offset in data_ of current entry.  >= restarts_ if !Valid
   uint32_t current_;
   uint32_t restart_index_;  // Index of restart block in which current_ falls
-  std::string key_;
+  std::string key_;         // 当前key，由于采用前缀压缩，因此需要保留当前key，可能会复用前缀
   Slice value_;
   Status status_;
 
@@ -209,6 +210,7 @@ class Block::Iter : public Iterator {
 
   virtual void SeekToLast() {
     SeekToRestartPoint(num_restarts_ - 1);
+    // Seek 直到解析到最后一个key的位置，key_ value_保存的就是最后一个k/v
     while (ParseNextKey() && NextEntryOffset() < restarts_) {
       // Keep skipping
     }
@@ -216,7 +218,7 @@ class Block::Iter : public Iterator {
 
  private:
   void CorruptionError() {
-    current_ = restarts_;
+    current_ = restarts_;   // Mark as invalid
     restart_index_ = num_restarts_;
     status_ = Status::Corruption("bad entry in block");
     key_.clear();
@@ -241,9 +243,11 @@ class Block::Iter : public Iterator {
       CorruptionError();
       return false;
     } else {
+      // resize时会共享前缀
       key_.resize(shared);
       key_.append(p, non_shared);
       value_ = Slice(p + non_shared, value_length);
+      // 根据当前的偏移量校正restart_index_
       while (restart_index_ + 1 < num_restarts_ &&
              GetRestartPoint(restart_index_ + 1) < current_) {
         ++restart_index_;

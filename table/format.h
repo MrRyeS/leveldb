@@ -34,12 +34,13 @@ class BlockHandle {
   void EncodeTo(std::string* dst) const;
   Status DecodeFrom(Slice* input);
 
+  // BlockHandle长度为2个varint64，因此最大长度为20
   // Maximum encoding length of a BlockHandle
   enum { kMaxEncodedLength = 10 + 10 };
 
  private:
-  uint64_t offset_;
-  uint64_t size_;
+  uint64_t offset_; // 所指block的offset
+  uint64_t size_;   // 所指block的size
 };
 
 // Footer encapsulates the fixed information stored at the tail
@@ -60,9 +61,13 @@ class Footer {
     index_handle_ = h;
   }
 
+  // 将Footer序列化后append在dst上
   void EncodeTo(std::string* dst) const;
+  // 从input的data里反序列化出Footer
   Status DecodeFrom(Slice* input);
 
+  // Footer 长度固定为2个BlockHandle长度和一个魔数长度
+  //
   // Encoded length of a Footer.  Note that the serialization of a
   // Footer will always occupy exactly this many bytes.  It consists
   // of two block handles and a magic number.
@@ -71,8 +76,8 @@ class Footer {
   };
 
  private:
-  BlockHandle metaindex_handle_;
-  BlockHandle index_handle_;
+  BlockHandle metaindex_handle_; // meta index block的起始位置和大小，具体参见SST文件格式
+  BlockHandle index_handle_;     // index block的起始地址和大小
 };
 
 // kTableMagicNumber was picked by running
@@ -84,11 +89,12 @@ static const uint64_t kTableMagicNumber = 0xdb4775248b80fb57ull;
 static const size_t kBlockTrailerSize = 5;
 
 struct BlockContents {
-  Slice data;           // Actual contents of data
+  Slice data;           // Actual contents of data 只有block data，不包含type crc32
   bool cachable;        // True iff data can be cached
   bool heap_allocated;  // True iff caller should delete[] data.data()
 };
 
+// 根据handle的标识，读取一个block
 // Read the block identified by "handle" from "file".  On failure
 // return non-OK.  On success fill *result and return OK.
 extern Status ReadBlock(RandomAccessFile* file,
