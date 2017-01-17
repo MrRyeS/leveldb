@@ -42,6 +42,8 @@ TableCache::~TableCache() {
   delete cache_;
 }
 
+// 从cache里查找序号为file_number的sst table文件，如果不存在cache中就打开该文件，
+// 放入cache，返回cache handle。
 Status TableCache::FindTable(uint64_t file_number, uint64_t file_size,
                              Cache::Handle** handle) {
   Status s;
@@ -79,6 +81,7 @@ Status TableCache::FindTable(uint64_t file_number, uint64_t file_size,
   return s;
 }
 
+// 获取file_number序号的sst table，返回该table的iterator，并将table指针存储在tableptr
 Iterator* TableCache::NewIterator(const ReadOptions& options,
                                   uint64_t file_number,
                                   uint64_t file_size,
@@ -118,6 +121,7 @@ Status TableCache::Get(const ReadOptions& options,
   return s;
 }
 
+// 清除cache中序号file_number table的缓存
 void TableCache::Evict(uint64_t file_number) {
   char buf[sizeof(file_number)];
   EncodeFixed64(buf, file_number);
