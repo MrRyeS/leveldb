@@ -84,20 +84,20 @@
 │   ├── block.h 			// Block 定义
 │   ├── block_builder.cc		// Block 生成方法 实现
 │   ├── block_builder.h 		// Block 生成方法 实现
-│   ├── filter_block.cc
-│   ├── filter_block.h
-│   ├── filter_block_test.cc
+│   ├── filter_block.cc 		// filter block 实现，用于快速检测某个key是否存在某个block中
+│   ├── filter_block.h			// filter block 实现，用于快速检测某个key是否存在某个block中
+│   ├── filter_block_test.cc		// filter block unit test case
 │   ├── format.cc			// Footer BlockHandle ReadBlock
 │   ├── format.h			// Footer BlockHandle ReadBlock
 │   ├── iterator.cc			// 迭代器定义实现
 │   ├── iterator_wrapper.h		// 迭代器定义实现
-│   ├── merger.cc
-│   ├── merger.h
-│   ├── table.cc
-│   ├── table_builder.cc
-│   ├── table_test.cc
-│   ├── two_level_iterator.cc
-│   └── two_level_iterator.h
+│   ├── merger.cc			// utils tool 将多个迭代器合并当做一个迭代器来访问
+│   ├── merger.h			// utils tool 将多个迭代器合并当做一个迭代器来访问
+│   ├── table.cc			// table implement
+│   ├── table_builder.cc		// table 持久化数据生成实现
+│   ├── table_test.cc			// SST table unit test
+│   ├── two_level_iterator.cc		// 遍历SST table的two level iterator
+│   └── two_level_iterator.h		// 遍历SST table的two level iterator
 └── util
     ├── arena.cc			// memory pool implement
     ├── arena.h 			// memory pool implement

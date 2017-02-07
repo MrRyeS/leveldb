@@ -135,18 +135,18 @@ class DBImpl : public DB {
 
   // State below is protected by mutex_
   port::Mutex mutex_;
-  port::AtomicPointer shutting_down_;
+  port::AtomicPointer shutting_down_;   // flag 标志db正在被close
   port::CondVar bg_cv_;          // Signalled when background work finishes
   MemTable* mem_;
   MemTable* imm_;                // Memtable being compacted
-  port::AtomicPointer has_imm_;  // So bg thread can detect non-NULL imm_
-  WritableFile* logfile_;
-  uint64_t logfile_number_;
-  log::Writer* log_;
+  port::AtomicPointer has_imm_;  // So bg thread can detect non-NULL imm_   供bg compaction使用
+  WritableFile* logfile_;        // current log file
+  uint64_t logfile_number_;      // current log number
+  log::Writer* log_;             // current log writer
   uint32_t seed_;                // For sampling.
 
   // Queue of writers.
-  std::deque<Writer*> writers_;
+  std::deque<Writer*> writers_;  // 存储的指针都是Write方法中分配在栈上的，为并发Write方法进行顺序协调
   WriteBatch* tmp_batch_;
 
   SnapshotList snapshots_;
@@ -188,7 +188,7 @@ class DBImpl : public DB {
       this->bytes_written += c.bytes_written;
     }
   };
-  CompactionStats stats_[config::kNumLevels];
+  CompactionStats stats_[config::kNumLevels];   // 统计每次compaction的状态
 
   // No copying allowed
   DBImpl(const DBImpl&);

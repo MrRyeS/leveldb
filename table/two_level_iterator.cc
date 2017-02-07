@@ -172,11 +172,13 @@ void TwoLevelIterator::InitDataBlock() {
 
 }  // namespace
 
+// iteration Seek时，先通过index iteration Seek，然后获取block_iteration handle，
+// 然后重置block_iteration(根据handle判断是否需要Seek block_iteration)
 Iterator* NewTwoLevelIterator(
-    Iterator* index_iter,
-    BlockFunction block_function,
-    void* arg,
-    const ReadOptions& options) {
+    Iterator* index_iter,           // index iteration, value 为block_iteration handle
+    BlockFunction block_function,   // block_iteration getter, arg1=arg  arg2=options arg3=index_iter.value()
+    void* arg,                      // getter arg
+    const ReadOptions& options) {   // getter arg
   return new TwoLevelIterator(index_iter, block_function, arg, options);
 }
 

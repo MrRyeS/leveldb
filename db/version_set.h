@@ -36,6 +36,8 @@ class Version;
 class VersionSet;
 class WritableFile;
 
+// 二分法查找key所在的文件，返回所在文件在files中的index
+//
 // Return the smallest index i such that files[i]->largest >= key.
 // Return files.size() if there is no such file.
 // REQUIRES: "files" contains a sorted list of non-overlapping files.
@@ -56,6 +58,8 @@ extern bool SomeFileOverlapsRange(
     const Slice* smallest_user_key,
     const Slice* largest_user_key);
 
+// 每个版本的sstable文件管理，主要集中在Version
+// Version 不会修改其管理的 sstable 文件，只有读取操作
 class Version {
  public:
   // Append to *iters a sequence of iterators that will
@@ -190,6 +194,8 @@ class VersionSet {
   // Allocate and return a new file number
   uint64_t NewFileNumber() { return next_file_number_++; }
 
+  // 使用file_number时可能出错了，将file_number标记为未使用(next_file_number_ 回退一次)
+  //
   // Arrange to reuse "file_number" unless a newer file number has
   // already been allocated.
   // REQUIRES: "file_number" was returned by a call to NewFileNumber().
@@ -247,6 +253,7 @@ class VersionSet {
   // The caller should delete the iterator when no longer needed.
   Iterator* MakeInputIterator(Compaction* c);
 
+  // 当且仅当该VersionSet需要compaction时返回true
   // Returns true iff some level needs a compaction.
   bool NeedsCompaction() const {
     Version* v = current_;
@@ -299,7 +306,7 @@ class VersionSet {
   const Options* const options_;
   TableCache* const table_cache_;
   const InternalKeyComparator icmp_;
-  uint64_t next_file_number_;
+  uint64_t next_file_number_;       // next log file number
   uint64_t manifest_file_number_;
   uint64_t last_sequence_;
   uint64_t log_number_;
@@ -368,7 +375,7 @@ class Compaction {
 
   Compaction(const Options* options, int level);
 
-  int level_;
+  int level_;                                 // 该compaction所在level
   uint64_t max_output_file_size_;
   Version* input_version_;
   VersionEdit edit_;

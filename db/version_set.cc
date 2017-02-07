@@ -42,7 +42,7 @@ static double MaxBytesForLevel(const Options* options, int level) {
   // the level-0 compaction threshold based on number of files.
 
   // Result for both level-0 and level-1
-  double result = 10. * 1048576.0;
+  double result = 10. * 1048576.0;  // 1024 * 1024 * 10
   while (level > 1) {
     result *= 10;
     level--;
@@ -83,6 +83,7 @@ Version::~Version() {
   }
 }
 
+// 二分法查找key所在的文件，返回所在文件在files中的index
 int FindFile(const InternalKeyComparator& icmp,
              const std::vector<FileMetaData*>& files,
              const Slice& key) {
@@ -104,6 +105,7 @@ int FindFile(const InternalKeyComparator& icmp,
   return right;
 }
 
+// 判断user_key是否比该文件内所有的key都大
 static bool AfterFile(const Comparator* ucmp,
                       const Slice* user_key, const FileMetaData* f) {
   // NULL user_key occurs before all keys and is therefore never after *f
@@ -111,6 +113,7 @@ static bool AfterFile(const Comparator* ucmp,
           ucmp->Compare(*user_key, f->largest.user_key()) > 0);
 }
 
+// 判断user_key是否比该文件内所有的key都小
 static bool BeforeFile(const Comparator* ucmp,
                        const Slice* user_key, const FileMetaData* f) {
   // NULL user_key occurs after all keys and is therefore never before *f
@@ -118,6 +121,9 @@ static bool BeforeFile(const Comparator* ucmp,
           ucmp->Compare(*user_key, f->smallest.user_key()) < 0);
 }
 
+// 测试files中的全部文件是否与smallest_user_key-largest_user_key范围重叠。
+// disjoint_sorted_files 标识files是否按key的顺序排列，如果已经排列好采用
+// 二分法，未排列采用遍历。
 bool SomeFileOverlapsRange(
     const InternalKeyComparator& icmp,
     bool disjoint_sorted_files,
@@ -484,7 +490,7 @@ void Version::Ref() {
 }
 
 void Version::Unref() {
-  assert(this != &vset_->dummy_versions_);
+  assert(this != &vset_->dummy_versions_);  // 防止对 list head 进行调用
   assert(refs_ >= 1);
   --refs_;
   if (refs_ == 0) {
@@ -597,6 +603,7 @@ std::string Version::DebugString() const {
   return r;
 }
 
+// MANIFEST 文件中会存储很多 VersionEdit 数据。
 // A helper class so we can efficiently apply a whole sequence
 // of edits to a particular state without creating intermediate
 // Versions that contain full copies of the intermediate state.
@@ -618,9 +625,9 @@ class VersionSet::Builder {
   };
 
   typedef std::set<FileMetaData*, BySmallestKey> FileSet;
-  struct LevelState {
+  struct LevelState {                       // meta of per level
     std::set<uint64_t> deleted_files;
-    FileSet* added_files;
+    FileSet* added_files;                   // set collection of file
   };
 
   VersionSet* vset_;
@@ -633,7 +640,7 @@ class VersionSet::Builder {
       : vset_(vset),
         base_(base) {
     base_->Ref();
-    BySmallestKey cmp;
+    BySmallestKey cmp;  // set(FileSet) comparator
     cmp.internal_comparator = &vset_->icmp_;
     for (int level = 0; level < config::kNumLevels; level++) {
       levels_[level].added_files = new FileSet(cmp);
@@ -686,6 +693,11 @@ class VersionSet::Builder {
       FileMetaData* f = new FileMetaData(edit->new_files_[i].second);
       f->refs = 1;
 
+      // allowed_seeks是对compaction流程的有一个优化:
+      // 当一个Get操作时，可能会触发多次Seek操作。这个过程中可能需要读取很多SST文件
+      // 造成IO负担，因此对Seek进行计数，设置allowed_seeks作为阈值，当allowed_seeks
+      // 降到0，说明急需一个compact操作。
+      //
       // We arrange to automatically compact this file after
       // a certain number of seeks.  Let's assume:
       //   (1) One seek costs 10ms
@@ -790,7 +802,7 @@ VersionSet::VersionSet(const std::string& dbname,
       descriptor_log_(NULL),
       dummy_versions_(this),
       current_(NULL) {
-  AppendVersion(new Version(this));
+  AppendVersion(new Version(this)); // apply current Version
 }
 
 VersionSet::~VersionSet() {
@@ -802,12 +814,12 @@ VersionSet::~VersionSet() {
 
 void VersionSet::AppendVersion(Version* v) {
   // Make "v" current
-  assert(v->refs_ == 0);
+  assert(v->refs_ == 0);        // check v is a new one
   assert(v != current_);
-  if (current_ != NULL) {
-    current_->Unref();
+  if (current_ != NULL) {       // release current
+    current_->Unref();          // remove from linked list in deconstruction
   }
-  current_ = v;
+  current_ = v;                 // assign current
   v->Ref();
 
   // Append to linked list
@@ -817,6 +829,7 @@ void VersionSet::AppendVersion(Version* v) {
   v->next_->prev_ = v;
 }
 
+// 将VersionEdit写入manifest文件
 Status VersionSet::LogAndApply(VersionEdit* edit, port::Mutex* mu) {
   if (edit->has_log_number_) {
     assert(edit->log_number_ >= log_number_);
@@ -919,9 +932,9 @@ Status VersionSet::Recover(bool *save_manifest) {
   if (current.empty() || current[current.size()-1] != '\n') {
     return Status::Corruption("CURRENT file does not end with newline");
   }
-  current.resize(current.size() - 1);
+  current.resize(current.size() - 1);   // erase '\n'
 
-  std::string dscname = dbname_ + "/" + current;
+  std::string dscname = dbname_ + "/" + current;    // get current manifest file name
   SequentialFile* file;
   s = env_->NewSequentialFile(dscname, &file);
   if (!s.ok()) {
@@ -944,6 +957,7 @@ Status VersionSet::Recover(bool *save_manifest) {
     log::Reader reader(file, &reporter, true/*checksum*/, 0/*initial_offset*/);
     Slice record;
     std::string scratch;
+    // read VersionEdit data
     while (reader.ReadRecord(&record, &scratch) && s.ok()) {
       VersionEdit edit;
       s = edit.DecodeFrom(record);
@@ -997,6 +1011,7 @@ Status VersionSet::Recover(bool *save_manifest) {
       prev_log_number = 0;
     }
 
+    // 更新使用文件序号
     MarkFileNumberUsed(prev_log_number);
     MarkFileNumberUsed(log_number);
   }
@@ -1006,6 +1021,7 @@ Status VersionSet::Recover(bool *save_manifest) {
     builder.SaveTo(v);
     // Install recovered version
     Finalize(v);
+    // 更新当前的version和其他meta
     AppendVersion(v);
     manifest_file_number_ = next_file;
     next_file_number_ = next_file + 1;
@@ -1061,6 +1077,7 @@ void VersionSet::MarkFileNumberUsed(uint64_t number) {
   }
 }
 
+// 计算compaction level和score
 void VersionSet::Finalize(Version* v) {
   // Precomputed best level for next compaction
   int best_level = -1;
@@ -1463,16 +1480,21 @@ Compaction::~Compaction() {
   }
 }
 
+// 避免频繁的合并、分裂。当满足条件时，直接移动到下一层(level+2)，
+// return true跳过level+1层。
 bool Compaction::IsTrivialMove() const {
   const VersionSet* vset = input_version_->vset_;
   // Avoid a move if there is lots of overlapping grandparent data.
   // Otherwise, the move could create a parent file that will require
   // a very expensive merge later on.
+  // level 层文件数为1，level+1 层文件数为0 and level+2 层的文件总大小
+  // 还未达到阈值。直接跳过level+1
   return (num_input_files(0) == 1 && num_input_files(1) == 0 &&
           TotalFileSize(grandparents_) <=
               MaxGrandParentOverlapBytes(vset->options_));
 }
 
+// 将该compaction的delete file加入到VersionEdit中。
 void Compaction::AddInputDeletions(VersionEdit* edit) {
   for (int which = 0; which < 2; which++) {
     for (size_t i = 0; i < inputs_[which].size(); i++) {
@@ -1481,6 +1503,7 @@ void Compaction::AddInputDeletions(VersionEdit* edit) {
   }
 }
 
+// 判断该level是否是user_key的最低level。level比当前level大compaction为存储该key
 bool Compaction::IsBaseLevelForKey(const Slice& user_key) {
   // Maybe use binary search to find right entry instead of linear search?
   const Comparator* user_cmp = input_version_->vset_->icmp_.user_comparator();
