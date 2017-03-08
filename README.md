@@ -1,3 +1,5 @@
+** 笔记/分析 [leveldb源码分析](https://lrita.github.io/categories/#leveldb)**
+
 **LevelDB is a fast key-value storage library written at Google that provides an ordered mapping from string keys to string values.**
 
 [![Build Status](https://travis-ci.org/google/leveldb.svg?branch=master)](https://travis-ci.org/google/leveldb)
