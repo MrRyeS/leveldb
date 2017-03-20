@@ -112,6 +112,7 @@ class Version {
   int PickLevelForMemTableOutput(const Slice& smallest_user_key,
                                  const Slice& largest_user_key);
 
+  // 获取指定level的文件个数
   int NumFiles(int level) const { return files_[level].size(); }
 
   // Return a human readable string that describes this version's contents.
@@ -122,6 +123,7 @@ class Version {
   friend class VersionSet;
 
   class LevelFileNumIterator;
+  // 获取能够遍历该Version指定level的全部文件的聚合iterator
   Iterator* NewConcatenatingIterator(const ReadOptions&, int level) const;
 
   // Call func(arg, level, f) for every file that overlaps user_key in
@@ -139,6 +141,7 @@ class Version {
   int refs_;                    // Number of live refs to this version
 
   // List of files per level
+  // SSTable文件的集合
   std::vector<FileMetaData*> files_[config::kNumLevels];
 
   // Next file to compact based on seek stats.
@@ -327,6 +330,9 @@ class VersionSet {
   void operator=(const VersionSet&);
 };
 
+// 当需要进行SSTable文件合并时，从VersionSet生成该object，用于描述该次合并的
+// 相关信息
+//
 // A Compaction encapsulates information about a compaction.
 class Compaction {
  public:
